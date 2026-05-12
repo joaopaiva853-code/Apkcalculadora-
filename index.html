@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <meta name="theme-color" content="#0a1219">
-    <title>IPTV Manager Pro - Editar Planos</title>
+    <title>IPTV Manager Pro - Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
@@ -105,6 +105,7 @@
             cursor: pointer;
             flex: 1 0 auto;
             text-align: center;
+            transition: 0.2s;
         }
         .tab-btn.active {
             background: linear-gradient(135deg, #f093fb, #f5576c);
@@ -122,24 +123,6 @@
             to { opacity: 1; transform: translateY(0);}
         }
 
-        .form-group {
-            margin-bottom: 14px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 0.75rem;
-            opacity: 0.8;
-        }
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 12px;
-            background: rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 1rem;
-            color: white;
-            font-size: 0.9rem;
-        }
         .btn {
             padding: 12px 20px;
             border-radius: 2rem;
@@ -158,39 +141,7 @@
         .btn-secondary { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.2); }
         .btn-danger { background: #dc2626; color: white; }
         .btn-success { background: #10b981; color: white; }
-        .btn-sm { padding: 8px 12px; font-size: 0.7rem; width: auto; }
 
-        .plan-editor {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 16px;
-            margin-bottom: 20px;
-        }
-        .plan-item {
-            background: rgba(255,255,255,0.03);
-            border-radius: 1rem;
-            padding: 12px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .plan-item input {
-            flex: 2;
-            min-width: 100px;
-            background: rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 1rem;
-            padding: 8px 12px;
-            color: white;
-        }
-        .plan-item .plan-price {
-            flex: 1;
-        }
-        .plan-item .plan-name {
-            flex: 2;
-        }
         .toast {
             position: fixed;
             bottom: 20px;
@@ -204,9 +155,6 @@
             z-index: 2000;
             white-space: nowrap;
         }
-        hr { margin: 16px 0; border-color: rgba(255,255,255,0.1); }
-        .row-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
-        .row-buttons .btn { flex: 1; }
         @media (max-width: 480px) {
             .stat-card .value { font-size: 1.4rem; }
             .tab-btn { font-size: 0.7rem; padding: 8px 12px; }
@@ -217,7 +165,7 @@
 <div class="app-container">
     <div class="header">
         <h1>📺 IPTV Manager Pro</h1>
-        <p>Dashboard - Gerencie clientes, finanças e planos</p>
+        <p>Dashboard - Visão geral do negócio</p>
     </div>
 
     <div class="stats-grid">
@@ -233,13 +181,15 @@
         <div class="chart-card"><h3>💰 Faturamento Mensal</h3><canvas id="revenueChart"></canvas></div>
     </div>
 
+    <!-- Botões principais: todos abrem páginas externas (Clientes, Finanças, Configurações) + aba Relatórios interna -->
     <div class="tabs">
-        <button class="tab-btn page-btn" id="openClientsPageBtn">👥 Clientes</button>
-        <button class="tab-btn page-btn" id="openFinancePageBtn">💰 Finanças</button>
+        <button class="tab-btn page-btn" id="openClientsPageBtn">👥 Clientes (Nova Janela)</button>
+        <button class="tab-btn page-btn" id="openFinancePageBtn">💰 Finanças (Nova Janela)</button>
         <button class="tab-btn active" data-tab="reports">📈 Relatórios</button>
-        <button class="tab-btn" data-tab="settings">⚙️ Config</button>
+        <button class="tab-btn page-btn" id="openSettingsPageBtn">⚙️ Config (Nova Janela)</button>
     </div>
 
+    <!-- Aba Relatórios (única que permanece interna) -->
     <div id="tabReports" class="tab-content active">
         <div class="charts-grid">
             <div class="chart-card"><h3>📊 Distribuição de Planos</h3><canvas id="planDistributionChart"></canvas></div>
@@ -251,37 +201,13 @@
             <div class="stat-card"><div class="value" id="netProfit">R$ 0</div><div class="label">Lucro Líquido</div></div>
         </div>
     </div>
-
-    <div id="tabSettings" class="tab-content">
-        <div class="chart-card">
-            <h3>⚙️ Configurações Gerais</h3>
-            <div class="form-group"><label>Nome da Empresa</label><input type="text" id="companyName" placeholder="IPTV Manager Pro"></div>
-            <div class="form-group"><label>WhatsApp Suporte</label><input type="text" id="supportWhatsapp" placeholder="11999999999"></div>
-            <button class="btn btn-primary" onclick="saveSettings()">💾 Salvar Configurações</button>
-            
-            <hr>
-            <h3>✏️ Editar Planos (Nomes e Preços)</h3>
-            <div id="plansEditor" class="plan-editor"></div>
-            <button class="btn btn-success" onclick="savePlans()">💾 Salvar Planos</button>
-            <button class="btn btn-secondary" onclick="resetDefaultPlans()">↺ Restaurar Padrão</button>
-            
-            <hr>
-            <div class="row-buttons">
-                <button class="btn btn-secondary" onclick="exportData()">📤 Exportar Dados</button>
-                <button class="btn btn-danger" onclick="resetData()">⚠️ Resetar Tudo</button>
-            </div>
-            <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(this)">
-            <button class="btn btn-secondary" style="margin-top: 12px;" onclick="document.getElementById('importFile').click()">📥 Importar Dados</button>
-        </div>
-    </div>
 </div>
 
 <script>
-    // ====================== DADOS GLOBAIS ======================
+    // ====================== DADOS GLOBAIS (mesmo localStorage) ======================
     let clients = [];
     let transactions = [];
     let settings = { companyName: "IPTV Manager Pro", supportWhatsapp: "" };
-    // Planos dinâmicos: array de objetos { id, name, price, months }
     let plans = [
         { id: "mensal", name: "Mensal", price: 29.90, months: 1 },
         { id: "bimestral", name: "Bimestral", price: 54.90, months: 2 },
@@ -291,7 +217,6 @@
     
     let charts = {};
 
-    // Carregar dados e planos
     function loadData() {
         const savedClients = localStorage.getItem('iptv_clients');
         const savedTransactions = localStorage.getItem('iptv_transactions');
@@ -308,7 +233,6 @@
         if (savedPlans) plans = JSON.parse(savedPlans);
         
         applySettings();
-        renderPlansEditor();
         renderAll();
     }
 
@@ -337,75 +261,12 @@
     function saveSettingsToLocal() { localStorage.setItem('iptv_settings', JSON.stringify(settings)); }
     function savePlansToLocal() { localStorage.setItem('iptv_plans', JSON.stringify(plans)); }
 
-    // Funções auxiliares para obter dados do plano
-    function getPlanById(planId) {
-        return plans.find(p => p.id === planId) || plans[0];
-    }
-    function getPlanPrice(planId) {
-        const plan = getPlanById(planId);
-        return plan ? plan.price : 0;
-    }
-    function getPlanMonths(planId) {
-        const plan = getPlanById(planId);
-        return plan ? plan.months : 1;
-    }
-    function getPlanName(planId) {
-        const plan = getPlanById(planId);
-        return plan ? plan.name : "Desconhecido";
+    function getPlanById(planId) { return plans.find(p => p.id === planId) || plans[0]; }
+
+    function applySettings() {
+        document.querySelector('.header h1').innerHTML = `📺 ${settings.companyName}`;
     }
 
-    // Renderizar editor de planos na tela de configurações
-    function renderPlansEditor() {
-        const container = document.getElementById('plansEditor');
-        if (!container) return;
-        let html = '';
-        plans.forEach((plan, index) => {
-            html += `
-                <div class="plan-item">
-                    <input type="text" class="plan-name" value="${escapeHtml(plan.name)}" data-id="${plan.id}" data-field="name" placeholder="Nome">
-                    <input type="number" step="0.01" class="plan-price" value="${plan.price}" data-id="${plan.id}" data-field="price" placeholder="Preço">
-                    <input type="number" class="plan-months" value="${plan.months}" data-id="${plan.id}" data-field="months" placeholder="Meses" style="width: 70px;">
-                </div>
-            `;
-        });
-        container.innerHTML = html;
-        // Adicionar listeners para atualizar o array plano em tempo real (opcional)
-        document.querySelectorAll('.plan-name, .plan-price, .plan-months').forEach(input => {
-            input.addEventListener('change', function() {
-                const id = this.dataset.id;
-                const field = this.dataset.field;
-                const plan = plans.find(p => p.id === id);
-                if (plan) {
-                    if (field === 'name') plan.name = this.value;
-                    else if (field === 'price') plan.price = parseFloat(this.value);
-                    else if (field === 'months') plan.months = parseInt(this.value);
-                }
-            });
-        });
-    }
-
-    function savePlans() {
-        // Salvar os planos atuais (já atualizados via listeners)
-        savePlansToLocal();
-        // Atualizar todos os clientes? Sim, mas manter os planIds. Apenas recarregar dados e renderizar
-        renderAll();
-        showToast("Planos salvos com sucesso!");
-    }
-
-    function resetDefaultPlans() {
-        plans = [
-            { id: "mensal", name: "Mensal", price: 29.90, months: 1 },
-            { id: "bimestral", name: "Bimestral", price: 54.90, months: 2 },
-            { id: "trimestral", name: "Trimestral", price: 79.90, months: 3 },
-            { id: "anual", name: "Anual", price: 299.90, months: 12 }
-        ];
-        savePlansToLocal();
-        renderPlansEditor();
-        renderAll();
-        showToast("Planos restaurados para o padrão!");
-    }
-
-    // Renderização geral
     function renderAll() {
         renderStats();
         renderReportsCharts();
@@ -436,7 +297,7 @@
         const ctxDist = document.getElementById('planDistributionChart').getContext('2d');
         charts.planDistributionChart = new Chart(ctxDist, {
             type: 'doughnut',
-            data: { labels: labels, datasets: [{ data: data, backgroundColor: ['#f093fb','#f5576c','#667eea','#764ba2'] }] },
+            data: { labels, datasets: [{ data, backgroundColor: ['#f093fb','#f5576c','#667eea','#764ba2'] }] },
             options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { color: 'white', font: { size: 10 } } } } }
         });
         
@@ -477,7 +338,7 @@
         const ctxPlans = document.getElementById('plansChart').getContext('2d');
         charts.plansChart = new Chart(ctxPlans, {
             type: 'pie',
-            data: { labels: labels, datasets: [{ data: data, backgroundColor: ['#f093fb','#f5576c','#667eea','#764ba2'] }] },
+            data: { labels, datasets: [{ data, backgroundColor: ['#f093fb','#f5576c','#667eea','#764ba2'] }] },
             options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { color: 'white', font: { size: 10 } } } } }
         });
         
@@ -494,7 +355,7 @@
         });
     }
 
-    // ====================== PÁGINAS EXTERNAS ======================
+    // ====================== ABRIR PÁGINAS EXTERNAS ======================
     function openClientsPage() {
         const win = window.open();
         if(win) {
@@ -509,55 +370,12 @@
             win.document.close();
         } else alert("Permita pop-ups para abrir finanças.");
     }
-
-    // ====================== CONFIGURAÇÕES ======================
-    function applySettings() {
-        document.getElementById('companyName').value = settings.companyName;
-        document.getElementById('supportWhatsapp').value = settings.supportWhatsapp;
-        document.querySelector('.header h1').innerHTML = `📺 ${settings.companyName}`;
-    }
-    function saveSettings() {
-        settings.companyName = document.getElementById('companyName').value || "IPTV Manager Pro";
-        settings.supportWhatsapp = document.getElementById('supportWhatsapp').value;
-        saveSettingsToLocal();
-        applySettings();
-        showToast("Configurações salvas!");
-    }
-    function exportData() {
-        const data = { clients, transactions, settings, plans };
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `iptv_backup_${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(a.href);
-        showToast("Exportado!");
-    }
-    function importData(input) {
-        const file = input.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = e => {
-            try {
-                const data = JSON.parse(e.target.result);
-                if(data.clients) clients = data.clients;
-                if(data.transactions) transactions = data.transactions;
-                if(data.settings) settings = { ...settings, ...data.settings };
-                if(data.plans) plans = data.plans;
-                saveClients(); saveTransactions(); saveSettingsToLocal(); savePlansToLocal();
-                renderPlansEditor();
-                renderAll();
-                showToast("Importado!");
-            } catch(err) { alert("Arquivo inválido"); }
-        };
-        reader.readAsText(file);
-        input.value = '';
-    }
-    function resetData() {
-        if(confirm("⚠️ Isso apagará TODOS os dados. Continuar?")) {
-            localStorage.clear();
-            location.reload();
-        }
+    function openSettingsPage() {
+        const win = window.open();
+        if(win) {
+            win.document.write(generateSettingsPageHTML());
+            win.document.close();
+        } else alert("Permita pop-ups para abrir configurações.");
     }
 
     function formatCurrency(v) { return new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' }).format(v); }
@@ -566,7 +384,6 @@
 
     window.addEventListener('focus', () => loadData());
 
-    // Eventos das abas
     document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -577,12 +394,184 @@
     });
     document.getElementById('openClientsPageBtn')?.addEventListener('click', (e) => { e.preventDefault(); openClientsPage(); });
     document.getElementById('openFinancePageBtn')?.addEventListener('click', (e) => { e.preventDefault(); openFinancePage(); });
+    document.getElementById('openSettingsPageBtn')?.addEventListener('click', (e) => { e.preventDefault(); openSettingsPage(); });
     
     loadData();
 
-    // ========== GERADOR DAS PÁGINAS EXTERNAS (com planos dinâmicos) ==========
+    // ========== PÁGINA EXTERNA DE CONFIGURAÇÕES (completa, com botão Voltar) ==========
+    function generateSettingsPageHTML() {
+        return `<!DOCTYPE html>
+        <html lang="pt-br">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+            <title>Configurações - IPTV Manager</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); font-family: 'Inter', system-ui, sans-serif; color: #eef2ff; padding: 16px; }
+                .container { max-width: 600px; margin: 0 auto; }
+                .header { background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 1.5rem; padding: 1.2rem; margin-bottom: 1.2rem; text-align: center; }
+                .card { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border-radius: 1.2rem; padding: 1.2rem; margin-bottom: 1.2rem; border: 1px solid rgba(255,255,255,0.1); }
+                .form-group { margin-bottom: 14px; }
+                .form-group label { display: block; margin-bottom: 5px; font-size: 0.75rem; opacity: 0.8; }
+                .form-group input, .form-group select { width: 100%; padding: 12px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2); border-radius: 1rem; color: white; font-size: 0.9rem; }
+                .btn { padding: 12px 20px; border-radius: 2rem; font-weight: 600; font-size: 0.85rem; cursor: pointer; border: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 8px; transition: 0.2s; }
+                .btn-primary { background: linear-gradient(135deg, #f093fb, #f5576c); color: white; }
+                .btn-secondary { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.2); }
+                .btn-danger { background: #dc2626; color: white; }
+                .btn-success { background: #10b981; color: white; }
+                .plan-editor { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+                .plan-item { background: rgba(255,255,255,0.03); border-radius: 1rem; padding: 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+                .plan-item input { flex: 2; min-width: 100px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); border-radius: 1rem; padding: 8px 12px; color: white; }
+                .row-buttons { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+                .row-buttons .btn { flex: 1; }
+                hr { margin: 16px 0; border-color: rgba(255,255,255,0.1); }
+                .back-btn { text-align: center; margin-top: 20px; }
+                .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 10px 20px; border-radius: 40px; font-size: 0.8rem; z-index: 2000; }
+            </style>
+        </head>
+        <body>
+        <div class="container">
+            <div class="header"><h1>⚙️ Configurações do Sistema</h1><p>Personalize sua experiência</p></div>
+            <div class="card">
+                <div class="form-group"><label>Nome da Empresa</label><input type="text" id="companyName" placeholder="IPTV Manager Pro"></div>
+                <div class="form-group"><label>WhatsApp para Suporte</label><input type="text" id="supportWhatsapp" placeholder="11999999999"></div>
+                <button class="btn btn-primary" onclick="saveGeneralSettings()">💾 Salvar Configurações</button>
+                
+                <hr>
+                <h3>✏️ Editar Planos (Nomes, Preços e Duração em meses)</h3>
+                <div id="plansEditor" class="plan-editor"></div>
+                <button class="btn btn-success" onclick="savePlans()">💾 Salvar Planos</button>
+                <button class="btn btn-secondary" onclick="resetDefaultPlans()">↺ Restaurar Padrão</button>
+                
+                <hr>
+                <div class="row-buttons">
+                    <button class="btn btn-secondary" onclick="exportData()">📤 Exportar Dados</button>
+                    <button class="btn btn-danger" onclick="resetData()">⚠️ Resetar Tudo</button>
+                </div>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(this)">
+                <button class="btn btn-secondary" style="margin-top: 12px;" onclick="document.getElementById('importFile').click()">📥 Importar Dados</button>
+            </div>
+            <div class="back-btn"><button class="btn btn-secondary" onclick="window.close()">🔙 Voltar (Fechar Janela)</button></div>
+        </div>
+        <script>
+            let settings = { companyName: "IPTV Manager Pro", supportWhatsapp: "" };
+            let plans = [];
+
+            function loadData() {
+                const savedSettings = localStorage.getItem('iptv_settings');
+                const savedPlans = localStorage.getItem('iptv_plans');
+                if (savedSettings) settings = { ...settings, ...JSON.parse(savedSettings) };
+                if (savedPlans) plans = JSON.parse(savedPlans);
+                else plans = [
+                    { id: "mensal", name: "Mensal", price: 29.90, months: 1 },
+                    { id: "bimestral", name: "Bimestral", price: 54.90, months: 2 },
+                    { id: "trimestral", name: "Trimestral", price: 79.90, months: 3 },
+                    { id: "anual", name: "Anual", price: 299.90, months: 12 }
+                ];
+                applySettings();
+                renderPlansEditor();
+            }
+            function applySettings() {
+                document.getElementById('companyName').value = settings.companyName;
+                document.getElementById('supportWhatsapp').value = settings.supportWhatsapp;
+            }
+            function saveGeneralSettings() {
+                settings.companyName = document.getElementById('companyName').value || "IPTV Manager Pro";
+                settings.supportWhatsapp = document.getElementById('supportWhatsapp').value;
+                localStorage.setItem('iptv_settings', JSON.stringify(settings));
+                showToast("Configurações salvas!");
+            }
+            function renderPlansEditor() {
+                const container = document.getElementById('plansEditor');
+                if (!container) return;
+                let html = '';
+                plans.forEach((plan) => {
+                    html += \`
+                        <div class="plan-item">
+                            <input type="text" value="\${escapeHtml(plan.name)}" data-id="\${plan.id}" data-field="name" placeholder="Nome">
+                            <input type="number" step="0.01" value="\${plan.price}" data-id="\${plan.id}" data-field="price" placeholder="Preço" style="flex:1">
+                            <input type="number" value="\${plan.months}" data-id="\${plan.id}" data-field="months" placeholder="Meses" style="width:70px">
+                        </div>
+                    \`;
+                });
+                container.innerHTML = html;
+                document.querySelectorAll('.plan-item input').forEach(input => {
+                    input.addEventListener('change', function() {
+                        const id = this.dataset.id;
+                        const field = this.dataset.field;
+                        const plan = plans.find(p => p.id === id);
+                        if (plan) {
+                            if (field === 'name') plan.name = this.value;
+                            else if (field === 'price') plan.price = parseFloat(this.value);
+                            else if (field === 'months') plan.months = parseInt(this.value);
+                        }
+                    });
+                });
+            }
+            function savePlans() {
+                localStorage.setItem('iptv_plans', JSON.stringify(plans));
+                showToast("Planos salvos!");
+            }
+            function resetDefaultPlans() {
+                plans = [
+                    { id: "mensal", name: "Mensal", price: 29.90, months: 1 },
+                    { id: "bimestral", name: "Bimestral", price: 54.90, months: 2 },
+                    { id: "trimestral", name: "Trimestral", price: 79.90, months: 3 },
+                    { id: "anual", name: "Anual", price: 299.90, months: 12 }
+                ];
+                renderPlansEditor();
+                savePlans();
+            }
+            function exportData() {
+                const clients = localStorage.getItem('iptv_clients') || '[]';
+                const transactions = localStorage.getItem('iptv_transactions') || '[]';
+                const data = { clients: JSON.parse(clients), transactions: JSON.parse(transactions), settings, plans };
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = \`iptv_backup_\${new Date().toISOString().split('T')[0]}.json\`;
+                a.click();
+                URL.revokeObjectURL(a.href);
+                showToast("Exportado!");
+            }
+            function importData(input) {
+                const file = input.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = e => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (data.clients) localStorage.setItem('iptv_clients', JSON.stringify(data.clients));
+                        if (data.transactions) localStorage.setItem('iptv_transactions', JSON.stringify(data.transactions));
+                        if (data.settings) { settings = data.settings; localStorage.setItem('iptv_settings', JSON.stringify(settings)); applySettings(); }
+                        if (data.plans) { plans = data.plans; renderPlansEditor(); savePlans(); }
+                        showToast("Importado! Recarregue o dashboard para ver as mudanças.");
+                    } catch(err) { alert("Arquivo inválido"); }
+                };
+                reader.readAsText(file);
+                input.value = '';
+            }
+            function resetData() {
+                if (confirm("⚠️ Isso apagará TODOS os dados. Continuar?")) {
+                    localStorage.clear();
+                    location.reload();
+                }
+            }
+            function showToast(msg) {
+                const t = document.createElement('div'); t.className='toast'; t.innerText=msg;
+                document.body.appendChild(t);
+                setTimeout(() => t.remove(), 2500);
+            }
+            function escapeHtml(s) { if(!s) return ''; return s.replace(/[&<>]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+            loadData();
+        <\/script>
+        </body>
+        </html>`;
+    }
+
+    // Páginas externas de Clientes e Finanças (já existentes, mantidas)
     function generateClientsPageHTML() {
-        // Passar os planos atuais para a página de clientes
         const plansData = JSON.stringify(plans);
         return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=yes"><title>Clientes</title><style>
             *{margin:0;padding:0;box-sizing:border-box;} body{background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);font-family:system-ui;color:#eef2ff;padding:16px;} .container{max-width:600px;margin:0 auto;} .header{background:linear-gradient(135deg,#667eea,#764ba2);border-radius:1.5rem;padding:1.2rem;margin-bottom:1rem;text-align:center;} 
@@ -591,7 +580,11 @@
             .filters{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;} .search-box{background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.2);border-radius:40px;padding:10px;color:white;} 
             .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;z-index:1000;} .modal-content{background:#1a1a2e;border-radius:1.5rem;padding:20px;max-width:90%;width:400px;} .hidden{display:none;} 
             .form-group{margin-bottom:12px;} .form-group input,.form-group select{width:100%;padding:10px;border-radius:1rem;background:rgba(0,0,0,0.4);border:1px solid #aaa;color:white;} .close-modal{float:right;font-size:1.8rem;background:none;border:none;color:white;}
-        </style></head><body><div class="container"><div class="header"><h1>👥 Clientes</h1></div><div class="filters"><input type="text" id="searchClient" class="search-box" placeholder="🔍 Buscar"><select id="filterPlan" class="search-box"><option value="all">Todos planos</option></select><button class="btn btn-primary" onclick="openModal()">➕ Novo Cliente</button></div><div id="clientsList" class="clients-grid"></div><div style="text-align:center;margin-top:24px;"><button class="btn btn-secondary" onclick="window.close()">🔙 Fechar</button></div></div>
+            .back-btn { margin-top: 24px; text-align: center; }
+        </style></head><body><div class="container"><div class="header"><h1>👥 Gestão de Clientes</h1></div>
+        <div class="filters"><input type="text" id="searchClient" class="search-box" placeholder="🔍 Buscar"><select id="filterPlan" class="search-box"><option value="all">Todos planos</option></select><button class="btn btn-primary" onclick="openModal()">➕ Novo Cliente</button></div>
+        <div id="clientsList" class="clients-grid"></div>
+        <div class="back-btn"><button class="btn btn-secondary" onclick="window.close()">🔙 Voltar (Fechar Janela)</button></div></div>
         <div id="modal" class="modal hidden"><div class="modal-content"><div class="modal-header"><h3 id="modalTitle">Cliente</h3><button class="close-modal" onclick="closeModal()">✕</button></div><div class="form-group"><label>Nome</label><input id="name"></div><div class="form-group"><label>WhatsApp</label><input id="whatsapp"></div><div class="form-group"><label>Plano</label><select id="planSelect"></select></div><div class="form-group"><label>Vencimento</label><input type="date" id="dueDate"></div><div class="form-group"><label>Status</label><select id="status"><option value="active">Ativo</option><option value="expired">Expirado</option></select></div><button class="btn btn-primary" onclick="saveClient()">Salvar</button></div></div>
         <script>
             let clients=[], editId=null, plans = ${plansData};
@@ -600,13 +593,13 @@
             function save(){ localStorage.setItem('iptv_clients',JSON.stringify(clients)); }
             function addTransaction(desc,amt,cat,date){ let t=JSON.parse(localStorage.getItem('iptv_transactions')||'[]'); t.unshift({id:Date.now(),type:"income",description:desc,amount:amt,category:cat,date:date}); localStorage.setItem('iptv_transactions',JSON.stringify(t)); }
             function getPlanById(id){ return plans.find(p=>p.id===id) || plans[0]; }
-            function renderPlansFilter(){ const select=document.getElementById('filterPlan'); if(select){ let html='<option value="all">Todos planos</option>'; plans.forEach(p=>{ html+='<option value="'+p.id+'">'+p.name+'</option>'; }); select.innerHTML=html; } }
-            function renderPlanOptions(){ const select=document.getElementById('planSelect'); if(select){ let html=''; plans.forEach(p=>{ html+='<option value="'+p.id+'">'+p.name+' - '+formatCurrency(p.price)+'</option>'; }); select.innerHTML=html; } }
+            function renderPlansFilter(){ const select=document.getElementById('filterPlan'); let html='<option value="all">Todos planos</option>'; plans.forEach(p=>{ html+='<option value="'+p.id+'">'+p.name+'</option>'; }); select.innerHTML=html; }
+            function renderPlanOptions(){ const select=document.getElementById('planSelect'); let html=''; plans.forEach(p=>{ html+='<option value="'+p.id+'">'+p.name+' - '+formatCurrency(p.price)+'</option>'; }); select.innerHTML=html; }
             function render(){ const search=document.getElementById('searchClient').value.toLowerCase(); const pFilter=document.getElementById('filterPlan').value; let filt=clients.filter(c=>(c.name.toLowerCase().includes(search)||c.whatsapp.includes(search))&&(pFilter==='all'||c.planId===pFilter)); const div=document.getElementById('clientsList'); if(filt.length===0){ div.innerHTML='<div style="text-align:center;padding:1rem;">Nenhum cliente</div>'; return; } let html=''; filt.forEach(c=>{ const plan=getPlanById(c.planId); let statusClass='status-active',statusText='Ativo'; const days=Math.ceil((new Date(c.dueDate)-new Date())/(1000*3600*24)); if(c.status==='expired'||days<0){ statusClass='status-expired'; statusText='Expirado'; }else if(days<=7){ statusClass='status-warning'; statusText='Vence em '+days+' dias'; } html+='<div class="client-card"><div class="client-header"><span class="client-name">'+escapeHtml(c.name)+'</span><span class="client-plan">'+plan.name+'</span></div><div>📞 '+c.whatsapp+'</div><div>📅 '+new Date(c.dueDate).toLocaleDateString()+'</div><div><span class="'+statusClass+' client-status">'+statusText+'</span></div><div class="client-actions"><button class="btn btn-sm" onclick="edit('+c.id+')">✏️</button><button class="btn btn-sm btn-danger" onclick="del('+c.id+')">🗑️</button><button class="btn btn-sm btn-success" onclick="renew('+c.id+')">🔄</button></div></div>'; }); div.innerHTML=html; }
             function openModal(id=null){ editId=id; renderPlanOptions(); if(id){ const c=clients.find(x=>x.id===id); if(c){ document.getElementById('name').value=c.name; document.getElementById('whatsapp').value=c.whatsapp; document.getElementById('planSelect').value=c.planId; document.getElementById('dueDate').value=c.dueDate; document.getElementById('status').value=c.status; } }else{ document.getElementById('name').value=''; document.getElementById('whatsapp').value=''; document.getElementById('planSelect').value=plans[0].id; document.getElementById('dueDate').value=''; document.getElementById('status').value='active'; } document.getElementById('modal').classList.remove('hidden'); }
             function closeModal(){ document.getElementById('modal').classList.add('hidden'); }
             function saveClient(){ const name=document.getElementById('name').value; const whats=document.getElementById('whatsapp').value; const planId=document.getElementById('planSelect').value; const due=document.getElementById('dueDate').value; const stat=document.getElementById('status').value; if(!name||!whats||!due) return alert('Preencha todos'); const plan=getPlanById(planId); if(editId){ const idx=clients.findIndex(c=>c.id===editId); if(idx!==-1) clients[idx]={...clients[idx],name,whatsapp:whats,planId,dueDate:due,status:stat}; }else{ const newId=Date.now(); clients.push({id:newId,name,whatsapp:whats,planId,dueDate:due,status:stat,notes:''}); addTransaction('Assinatura '+plan.name+' - '+name, plan.price, 'Assinatura', due); } save(); closeModal(); render(); }
-            function del(id){ if(confirm('Excluir?')){ clients=clients.filter(c=>c.id!==id); save(); render(); } }
+            function del(id){ if(confirm('Excluir cliente?')){ clients=clients.filter(c=>c.id!==id); save(); render(); } }
             function renew(id){ const c=clients.find(c=>c.id===id); if(c){ const plan=getPlanById(c.planId); const newDue=new Date(c.dueDate); newDue.setMonth(newDue.getMonth()+plan.months); c.dueDate=newDue.toISOString().split('T')[0]; c.status='active'; save(); addTransaction('Renovação '+plan.name+' - '+c.name, plan.price, 'Assinatura', new Date().toISOString().split('T')[0]); render(); alert('Renovado!'); } }
             function edit(id){ openModal(id); }
             function formatCurrency(v){ return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v); }
@@ -623,17 +616,23 @@
             .btn{padding:10px;border-radius:40px;border:none;font-weight:bold;cursor:pointer;} table{width:100%;border-collapse:collapse;} th,td{padding:8px;border-bottom:1px solid #aaa;font-size:0.75rem;} .income{color:#10b981;} .expense{color:#dc2626;} 
             .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;z-index:1000;} .modal-content{background:#1a1a2e;border-radius:1.5rem;padding:20px;width:90%;max-width:400px;} 
             .form-group{margin-bottom:12px;} input,select{width:100%;padding:10px;border-radius:1rem;background:rgba(0,0,0,0.4);border:1px solid #aaa;color:white;} .hidden{display:none;} .row-buttons{display:flex;gap:8px;margin-bottom:12px;}
-        </style></head><body><div class="container"><div class="header"><h1>💰 Finanças</h1></div><div class="stats-grid"><div class="stat-card"><div class="value" id="totalInc">R$ 0</div><div>Receitas</div></div><div class="stat-card"><div class="value" id="totalExp">R$ 0</div><div>Despesas</div></div><div class="stat-card"><div class="value" id="balance">R$ 0</div><div>Saldo</div></div></div><div class="row-buttons"><button class="btn btn-success" onclick="openTrans('income')">💰 Receita</button><button class="btn btn-danger" onclick="openTrans('expense')">💸 Despesa</button></div><div class="filters"><select id="typeFilter" class="search-box"><option value="all">Todos</option><option value="income">Receitas</option><option value="expense">Despesas</option></select><input type="month" id="monthFilter" class="search-box"></div><div class="transactions-table"> <table><thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th></th></tr></thead><tbody id="transBody"></tbody></table></div><div style="margin-top:24px;text-align:center;"><button class="btn btn-secondary" onclick="window.close()">🔙 Fechar</button></div></div>
+            .back-btn { margin-top: 24px; text-align: center; }
+        </style></head><body><div class="container"><div class="header"><h1>💰 Gestão Financeira</h1></div>
+        <div class="stats-grid"><div class="stat-card"><div class="value" id="totalInc">R$ 0</div><div>Receitas</div></div><div class="stat-card"><div class="value" id="totalExp">R$ 0</div><div>Despesas</div></div><div class="stat-card"><div class="value" id="balance">R$ 0</div><div>Saldo</div></div></div>
+        <div class="row-buttons"><button class="btn btn-success" onclick="openTrans('income')">💰 Receita</button><button class="btn btn-danger" onclick="openTrans('expense')">💸 Despesa</button></div>
+        <div class="filters"><select id="typeFilter" class="search-box"><option value="all">Todos</option><option value="income">Receitas</option><option value="expense">Despesas</option></select><input type="month" id="monthFilter" class="search-box"></div>
+        <div class="transactions-table"><table><thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th></th></tr></thead><tbody id="transBody"></tbody></table></div>
+        <div class="back-btn"><button class="btn btn-secondary" onclick="window.close()">🔙 Voltar (Fechar Janela)</button></div></div>
         <div id="transModal" class="modal hidden"><div class="modal-content"><h3 id="modalTitle">Nova Transação</h3><button class="close-modal" style="float:right;background:none;border:none;color:white;font-size:1.8rem;" onclick="closeTransModal()">✕</button><div class="form-group"><label>Descrição</label><input id="desc"></div><div class="form-group"><label>Valor (R$)</label><input type="number" id="amount" step="0.01"></div><div class="form-group"><label>Categoria</label><select id="cat"><option>Assinatura</option><option>Servidor</option><option>Marketing</option><option>Outros</option></select></div><div class="form-group"><label>Data</label><input type="date" id="transDate"></div><button class="btn btn-primary" onclick="saveTrans()">Salvar</button></div></div>
         <script>
             let transactions=[]; let currentType='income'; 
             function load(){const s=localStorage.getItem('iptv_transactions'); if(s)transactions=JSON.parse(s); else{const t=new Date().toISOString().split('T')[0]; transactions=[{id:1,type:"income",description:"Assinatura - João Silva",amount:29.9,category:"Assinatura",date:t},{id:2,type:"income",description:"Assinatura - Maria Santos",amount:299.9,category:"Assinatura",date:t},{id:3,type:"expense",description:"Servidor",amount:150,category:"Servidor",date:t}]; save();}render();} 
             function save(){localStorage.setItem('iptv_transactions',JSON.stringify(transactions));} 
-            function render(){let list=[...transactions]; const tf=document.getElementById('typeFilter').value; const mf=document.getElementById('monthFilter').value; if(tf!=='all')list=list.filter(t=>t.type===tf); if(mf)list=list.filter(t=>t.date.startsWith(mf)); list.sort((a,b)=>new Date(b.date)-new Date(a.date)); const tbody=document.getElementById('transBody'); if(list.length===0)tbody.innerHTML='<tr><td colspan="4">Nenhuma transação</td></tr>'; else{let html=''; list.forEach(t=>{html+='<tr><td>'+new Date(t.date).toLocaleDateString()+'</td><td>'+escapeHtml(t.description)+'</td><td class="'+(t.type==='income'?'income':'expense')+'">'+(t.type==='income'?'+':'-')+' '+formatCurrency(t.amount)+'</td><td><button onclick="delTrans('+t.id+')" style="background:#dc2626;border:none;padding:4px 8px;border-radius:20px;color:white;">🗑️</button></td></tr>';}); tbody.innerHTML=html;} const totalInc=transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0); const totalExp=transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0); document.getElementById('totalInc').innerHTML=formatCurrency(totalInc); document.getElementById('totalExp').innerHTML=formatCurrency(totalExp); document.getElementById('balance').innerHTML=formatCurrency(totalInc-totalExp);} 
+            function render(){let list=[...transactions]; const tf=document.getElementById('typeFilter').value; const mf=document.getElementById('monthFilter').value; if(tf!=='all')list=list.filter(t=>t.type===tf); if(mf)list=list.filter(t=>t.date.startsWith(mf)); list.sort((a,b)=>new Date(b.date)-new Date(a.date)); const tbody=document.getElementById('transBody'); if(list.length===0)tbody.innerHTML='<tr><td colspan="4">Nenhuma transação</tr>'; else{let html=''; list.forEach(t=>{html+='<tr><td>'+new Date(t.date).toLocaleDateString()+'</td><td>'+escapeHtml(t.description)+'</td><td class="'+(t.type==='income'?'income':'expense')+'">'+(t.type==='income'?'+':'-')+' '+formatCurrency(t.amount)+'</td><td><button onclick="delTrans('+t.id+')" style="background:#dc2626;border:none;padding:4px 8px;border-radius:20px;color:white;">🗑️</button></td></tr>';}); tbody.innerHTML=html;} const totalInc=transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0); const totalExp=transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0); document.getElementById('totalInc').innerHTML=formatCurrency(totalInc); document.getElementById('totalExp').innerHTML=formatCurrency(totalExp); document.getElementById('balance').innerHTML=formatCurrency(totalInc-totalExp);} 
             function openTrans(type){currentType=type; document.getElementById('modalTitle').innerText=type==='income'?'➕ Receita':'➖ Despesa'; document.getElementById('desc').value=''; document.getElementById('amount').value=''; document.getElementById('cat').value=type==='income'?'Assinatura':'Outros'; document.getElementById('transDate').value=new Date().toISOString().split('T')[0]; document.getElementById('transModal').classList.remove('hidden');} 
             function closeTransModal(){document.getElementById('transModal').classList.add('hidden');} 
             function saveTrans(){const desc=document.getElementById('desc').value; const amt=parseFloat(document.getElementById('amount').value); const cat=document.getElementById('cat').value; const dt=document.getElementById('transDate').value; if(!desc||isNaN(amt))return alert('Preencha descrição e valor'); transactions.unshift({id:Date.now(),type:currentType,description:desc,amount:amt,category:cat,date:dt}); save(); render(); closeTransModal();} 
-            function delTrans(id){if(confirm('Excluir?')){transactions=transactions.filter(t=>t.id!==id); save(); render();}} 
+            function delTrans(id){if(confirm('Excluir transação?')){transactions=transactions.filter(t=>t.id!==id); save(); render();}} 
             function formatCurrency(v){return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v);} 
             function escapeHtml(s){if(!s)return ''; return s.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));} 
             document.getElementById('typeFilter').addEventListener('change',()=>render()); document.getElementById('monthFilter').addEventListener('change',()=>render()); load();
